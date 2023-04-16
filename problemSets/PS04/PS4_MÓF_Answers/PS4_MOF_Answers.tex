@@ -1,0 +1,249 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage{graphicx,textcomp}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{fullpage}
+\usepackage{color}
+\usepackage[reqno]{amsmath}
+\usepackage{amsthm}
+\usepackage{fancyvrb}
+\usepackage{amssymb,enumerate}
+\usepackage[all]{xy}
+\usepackage{endnotes}
+\usepackage{lscape}
+\newtheorem{com}{Comment}
+\usepackage{float}
+\usepackage{hyperref}
+\newtheorem{lem} {Lemma}
+\newtheorem{prop}{Proposition}
+\newtheorem{thm}{Theorem}
+\newtheorem{defn}{Definition}
+\newtheorem{cor}{Corollary}
+\newtheorem{obs}{Observation}
+\usepackage[compact]{titlesec}
+\usepackage{dcolumn}
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\usepackage{multirow}
+\usepackage{xcolor}
+\newcolumntype{.}{D{.}{.}{-1}}
+\newcolumntype{d}[1]{D{.}{.}{#1}}
+\definecolor{light-gray}{gray}{0.65}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+	backgroundcolor=\color{backcolour},   
+	commentstyle=\color{codegreen},
+	keywordstyle=\color{magenta},
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codepurple},
+	basicstyle=\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+\lstset{style=mystyle}
+\newcommand{\Sref}[1]{Section~\ref{#1}}
+\newtheorem{hyp}{Hypothesis}
+
+\title{Problem Set 4}
+\date{Due: April 16, 2023}
+\author{Applied Stats II}
+
+
+\begin{document}
+	\maketitle
+	\section*{Instructions}
+	\begin{itemize}
+	\item Please show your work! You may lose points by simply writing in the answer. If the problem requires you to execute commands in \texttt{R}, please include the code you used to get your answers. Please also include the \texttt{.R} file that contains your code. If you are not sure if work needs to be shown for a particular problem, please ask.
+	\item Your homework should be submitted electronically on GitHub in \texttt{.pdf} form.
+	\item This problem set is due before 23:59 on Sunday April 16, 2023. No late assignments will be accepted.
+
+	\end{itemize}
+
+	\vspace{.25cm}
+\section*{Question 1}
+\vspace{.25cm}
+\noindent We're interested in modeling the historical causes of child mortality. We have data from 26855 children born in Skellefteå, Sweden from 1850 to 1884. Using the "child" dataset in the \texttt{eha} library, fit a Cox Proportional Hazard model using mother's age and infant's gender as covariates. Present and interpret the output.
+
+
+\newpage
+
+\section{Theory behind Cox Proportional Hazard Model}
+
+\noindent The Cox proportional Hazard model is a survival model used to model the relationship between the time to an event and predictor variables. It relates the time that passes before an event occurs to covariates that may be associated with that quantity of time. 
+\\
+
+\noindent The basic equation of the model is as follows:
+
+\begin{equation}
+h(t) = h0(t) * e^{\beta_{1}X_{1} + \beta_{2}X_{2} + ... + \beta_{p}X_{p}}
+\end{equation}
+
+\noindent 
+Where h(t) is the expected hazard at time t, $h_0(t)$ is the baseline hazard, expected when all the predictors $X_1$, $X_2$, $X_p$ and all the covariates between them are equal to zero. 
+\\\\
+
+\noindent If we divide both sides of the equation by $h_0(t)$, we get the following equation:
+
+\begin{equation}
+\frac{h(t)}{h_0(t)} = e^{\beta_1X_1 + \beta_2X_2 + ... + \beta_pX_p}
+\end{equation}
+
+\noindent If we take a natural log of both sides of this equation, we get the following:
+
+\begin{equation}
+ln({\frac{h(t)}{h_0(t)}}) = \beta_1X_1 + \beta_2X_2 + ... + \beta_pX_p
+\end{equation}
+
+\noindent The $\beta_1$ value in this case represents the change in the expected log of the hazard ratio relative to a one unit change in $X_1$, holding all other predictors constant. The $\beta$ coefficients in this case are what our results table will give us, after we run the regression.
+\\\\
+
+\section{Running the regression in R}
+
+\noindent 1. We begin by importing the libraries we will need to generate the output.
+\\
+\begin{lstlisting}
+# 1. Load in libraries
+library(eha)
+library(survival)
+library(stargazer)
+\end{lstlisting}
+
+
+
+\noindent 2. We then load in the "child" dataset.
+\\
+\begin{lstlisting}
+# 2. Load in data
+child <- child
+\end{lstlisting}
+
+\noindent 3. We then create the survival object from the data.
+\\
+
+\begin{lstlisting}
+# 3. Creating the survival object.
+child_surv <- with(child, Surv(enter, exit, event))
+\end{lstlisting}
+
+\noindent 
+4. We then run the Cox Proportional Hazard Regression on the data, with mother's age and infant's gender as covariates.
+\\
+\begin{lstlisting}
+# 4. Run a Cox Proportional Hazard Regression on the 
+# data with mother's age and infant's gender as
+# covariates. 
+
+cox.reg <- coxph(child_surv ~ m.age + sex,
+data = child)
+\end{lstlisting}
+
+\noindent 5. We use stargazer to generate output for us, as follows:
+\\
+\begin{lstlisting}
+stargazer(cox.reg,
+type = "latex")
+\end{lstlisting}
+% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy Institute. E-mail: marek.hlavac at gmail.com
+% Date and time: Sat, Apr 15, 2023 - 16:53:29
+\begin{table}[!htbp] \centering 
+  \caption{} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{1}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-2} 
+\\[-1.8ex] & child\_surv \\ 
+\hline \\[-1.8ex] 
+ m.age & 0.008$^{***}$ \\ 
+  & (0.002) \\ 
+  & \\ 
+ sexfemale & $-$0.082$^{***}$ \\ 
+  & (0.027) \\ 
+  & \\ 
+\hline \\[-1.8ex] 
+Observations & 26,574 \\ 
+R$^{2}$ & 0.001 \\ 
+Max. Possible R$^{2}$ & 0.986 \\ 
+Log Likelihood & $-$56,503.480 \\ 
+Wald Test & 22.520$^{***}$ (df = 2) \\ 
+LR Test & 22.518$^{***}$ (df = 2) \\ 
+Score (Logrank) Test & 22.530$^{***}$ (df = 2) \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{1}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 
+
+\newpage
+
+
+\section{Interpreting our regression results}
+
+\noindent 
+The results table indicates to us that both predictor variables are statistically significant at the 1\% percent level, for a 0.01 alpha level of significance ($\alpha$ = 0.01) This is to say that both predictors have a significant non-zero relationship with the outcome variable.
+\\
+
+\noindent
+The coefficient estimate for \texttt{m.age} is 0.008. This means that for a one year increase in the age in the mother, we would expect a 0.008 increase in the log of the hazard ratio.
+\\
+\begin{lstlisting}
+exp(0.008)
+\end{lstlisting}
+
+\noindent When we calculate \texttt{exp(0.008)}, we get a result of 1.008032. This means that for a one unit increase in the age of the mother, we would expect the hazard ratio (HR) of the death for the child to increase by 0.8\%, holding all other predictors constant.
+\\
+
+\noindent 
+The coefficient estimate for \texttt{sexfemale} is -0.082. This means that there is a 0.082 decrease in the expected log of hazard for female infants compared with male ones, holding all other predictors constant. 
+\\
+
+\begin{lstlisting}
+exp(-0.082)
+\end{lstlisting}
+
+\noindent 
+When we calculate \texttt{exp(-0.082)}, we get a result of 0.921272. This means that the hazard ratio for female children is 8\% lower than for male children, meaning that around 92 female infants die for every 100 male infants.
+\\
+
+\noindent
+The results of the Wald, Likelihood-Ratio and Score (Logrank) test, with statistically significant results at the $\alpha$ = 0.01 level, suggest that the model is a good fit for the data.
+\\
+
+\noindent
+Our $R^2$ value indicates that the predictor variables only explain a small proportion, namely 0.1\% of the variability in the outcome variable child survival.
+\\
+
+\noindent We can represent our coefficients as follows:
+
+\begin{equation}
+ln({\frac{h(t)}{h_0(t)}}) = 0.008*(M.AGE)  -0.082*(SEX.FEMALE)
+\end{equation}
+
+\noindent Or as follows:
+
+\begin{equation}
+\frac{h(t)}{h_0(t)} = e^{0.008*M.AGE -0.082*SEX.FEMALE}
+\end{equation}
+
+\end{document}
+
+
+
+
